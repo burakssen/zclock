@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>zclock</title>
+        <style>
+            body {
+                margin: 0;
+                background: #000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+            canvas.emscripten {
+                outline: none;
+                image-rendering: auto;
+                image-rendering: -webkit-optimize-contrast;
+                width: auto;
+                height: auto;
+            }
+            button {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                padding: 10px 20px;
+                font-size: 16px;
+                background-color: #333;
+                color: #fff;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas
+            id="canvas"
+            class="emscripten"
+            oncontextmenu="event.preventDefault()"
+            tabindex="-1"
+        ></canvas>
+        <script>
+            var Module = {
+                canvas: (function () {
+                    const canvas = document.getElementById("canvas");
+                    return canvas;
+                })(),
+                print: (text) => console.log(text),
+                printErr: (text) => console.error(text),
+                onRuntimeInitialized() {
+                    const width = Module._GetScreenWidth();
+                    const height = Module._GetScreenHeight();
+                    const canvas = Module.canvas;
+
+                    // Set logical canvas size (CSS)
+                    canvas.style.width = width + "px";
+                    canvas.style.height = height + "px";
+
+                    // Let Emscripten handle DPI scaling internally
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    // Optional: enable high-DPI rendering through Emscripten API
+                    if (typeof Module.setCanvasSize === "function") {
+                        // Ensures consistency between Emscripten's GL context and JS canvas
+                        Module.setCanvasSize(width, height, true);
+                    }
+                    console.log(`Canvas initialized: ${width}x${height}`);
+                },
+            };
+        </script>
+        {{{ SCRIPT }}}
+        <button onclick="window.location.href='https://burakssen.com'">
+            Go Back
+        </button>
+    </body>
+</html>
