@@ -1,78 +1,109 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <title>zclock</title>
-        <style>
-            body {
-                margin: 0;
-                background: #000;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-            }
-            canvas.emscripten {
-                outline: none;
-                image-rendering: auto;
-                image-rendering: -webkit-optimize-contrast;
-                width: auto;
-                height: auto;
-            }
-            button {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                padding: 10px 20px;
-                font-size: 16px;
-                background-color: #333;
-                color: #fff;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-        </style>
-    </head>
-    <body>
-        <canvas
-            id="canvas"
-            class="emscripten"
-            oncontextmenu="event.preventDefault()"
-            tabindex="-1"
-        ></canvas>
-        <script>
-            var Module = {
-                canvas: (function () {
-                    const canvas = document.getElementById("canvas");
-                    return canvas;
-                })(),
-                print: (text) => console.log(text),
-                printErr: (text) => console.error(text),
-                onRuntimeInitialized() {
-                    const width = Module._GetScreenWidth();
-                    const height = Module._GetScreenHeight();
-                    const canvas = Module.canvas;
 
-                    // Set logical canvas size (CSS)
-                    canvas.style.width = width + "px";
-                    canvas.style.height = height + "px";
+<head>
+    <meta charset="utf-8" />
+    <title>zclock</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-                    // Let Emscripten handle DPI scaling internally
-                    canvas.width = width;
-                    canvas.height = height;
+        canvas.emscripten {
+            outline: none;
+            image-rendering: auto;
+            image-rendering: -webkit-optimize-contrast;
+            max-width: 100%;
+            max-height: 100%;
+            height: auto;
+            width: auto;
+        }
 
-                    // Optional: enable high-DPI rendering through Emscripten API
-                    if (typeof Module.setCanvasSize === "function") {
-                        // Ensures consistency between Emscripten's GL context and JS canvas
-                        Module.setCanvasSize(width, height, true);
-                    }
-                    console.log(`Canvas initialized: ${width}x${height}`);
-                },
-            };
-        </script>
-        {{{ SCRIPT }}}
-        <button onclick="window.location.href='https://burakssen.com'">
-            Go Back
-        </button>
-    </body>
+        button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+            z-index: 10;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" class="emscripten" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        let baseWidth = 800, baseHeight = 600; // default fallback
+
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const availableWidth = window.innerWidth;
+            const availableHeight = window.innerHeight;
+
+            // maintain aspect ratio of base canvas
+            const aspect = baseWidth / baseHeight;
+            let displayWidth = availableWidth;
+            let displayHeight = availableWidth / aspect;
+
+            if (displayHeight > availableHeight) {
+                displayHeight = availableHeight;
+                displayWidth = availableHeight * aspect;
+            }
+
+            canvas.style.width = displayWidth + "px";
+            canvas.style.height = displayHeight + "px";
+
+            // internal resolution for high DPI
+            canvas.width = displayWidth * dpr;
+            canvas.height = displayHeight * dpr;
+
+            if (typeof Module.setCanvasSize === "function") {
+                Module.setCanvasSize(canvas.width, canvas.height, true);
+            }
+        }
+
+        var Module = {
+            canvas,
+            print: (text) => console.log(text),
+            printErr: (text) => console.error(text),
+            onRuntimeInitialized() {
+                baseWidth = Module._GetScreenWidth();
+                baseHeight = Module._GetScreenHeight();
+                resizeCanvas();
+                console.log(`Canvas initialized: ${baseWidth}x${baseHeight}`);
+            },
+        };
+
+        window.addEventListener("resize", resizeCanvas);
+    </script>
+
+    {{{ SCRIPT }}}
+
+    <button onclick="window.location.href='https://burakssen.com'">
+        Go Back
+    </button>
+</body>
+
 </html>
