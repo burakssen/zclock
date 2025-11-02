@@ -123,30 +123,6 @@ const AppState = struct {
 fn gameLoop(state: *AppState) void {
     const delta = rl.GetFrameTime();
 
-    // Check if window was resized
-    const current_width = rl.GetScreenWidth();
-    const current_height = rl.GetScreenHeight();
-
-    if (current_width != state.screen_width or current_height != state.screen_height) {
-        // Update dimensions
-        state.screen_width = current_width;
-        state.screen_height = current_height;
-
-        // Recreate render textures with new size
-        for (state.view_textures) |tex| {
-            rl.UnloadRenderTexture(tex);
-        }
-
-        for (&state.view_textures) |*tex| {
-            tex.* = rl.LoadRenderTexture(current_width, current_height);
-        }
-
-        // Re-render all views
-        for (0..state.views.len) |i| {
-            state.renderViewToTexture(i);
-        }
-    }
-
     state.update(delta);
 
     rl.BeginDrawing();
@@ -173,27 +149,14 @@ fn runDesktop(state: *AppState) void {
         gameLoop(state);
     }
 }
+
 pub fn main() !void {
+    const screen_width: i32 = 1280;
+    const screen_height: i32 = 720;
 
-    // Get initial window size dynamically
-    const screen_width: i32 = if (builtin.os.tag == .emscripten)
-        @intCast(@cImport(@cInclude("emscripten/emscripten.h")).emscripten_run_script_int("window.innerWidth"))
-    else
-        1280;
-
-    const screen_height: i32 = if (builtin.os.tag == .emscripten)
-        @intCast(@cImport(@cInclude("emscripten/emscripten.h")).emscripten_run_script_int("window.innerHeight"))
-    else
-        720;
-
-    const flags = if (builtin.os.tag == .emscripten)
-        rl.FLAG_VSYNC_HINT | rl.FLAG_WINDOW_RESIZABLE
-    else
-        rl.FLAG_VSYNC_HINT | rl.FLAG_WINDOW_RESIZABLE | rl.FLAG_WINDOW_HIGHDPI;
-
-    rl.SetConfigFlags(flags);
+    rl.SetConfigFlags(rl.FLAG_WINDOW_HIGHDPI | rl.FLAG_VSYNC_HINT);
     rl.InitWindow(screen_width, screen_height, "zclock - a digital clock application");
-    rl.InitAudioDevice();
+    rl.InitAudioDevice(); // Must be called before creating Countdown!
 
     defer rl.CloseWindow();
     defer rl.CloseAudioDevice();
