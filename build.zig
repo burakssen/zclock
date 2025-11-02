@@ -23,20 +23,6 @@ pub fn build(b: *std.Build) !void {
 
     exe_mod.addIncludePath(raylib_dep.path("src"));
 
-    //const exe = b.addExecutable(.{
-    //    .name = "zclock",
-    //    .root_module = b.createModule(.{
-    //        .root_source_file = b.path("src/main.zig"),
-    //        .target = target,
-    //        .optimize = optimize,
-    //        .imports = &.{
-    //            .{ .name = "raylib", .module = raylib_artifact.root_module },
-    //        },
-    //    }),
-    //});
-
-    //exe.addIncludePath(raylib_dep.path("."));
-
     if (target.result.os.tag == .emscripten) {
         const wasm = b.addLibrary(.{ .name = "zclock", .root_module = exe_mod });
         wasm.linkLibrary(raylib_artifact);
@@ -51,7 +37,7 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
         });
 
-        try emcc_settings.put("EXPORTED_FUNCTIONS", "[_main, _GetScreenWidth, _GetScreenHeight]");
+        try emcc_settings.put("EXPORTED_FUNCTIONS", "[_main, _GetScreenWidth, _GetScreenHeight, _SetWindowSize]");
 
         const emcc_step = raylib.emsdk.emccStep(b, raylib_artifact, wasm, .{
             .optimize = optimize,
@@ -59,6 +45,9 @@ pub fn build(b: *std.Build) !void {
             .settings = emcc_settings,
             .shell_file_path = b.path("index.html"),
             .install_dir = .{ .custom = "web" },
+            .preload_paths = &.{
+                .{ .src_path = "assets/", .virtual_path = "/assets" },
+            },
         });
 
         b.getInstallStep().dependOn(emcc_step);

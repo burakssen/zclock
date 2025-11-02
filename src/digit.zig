@@ -6,6 +6,7 @@ const DIGIT_PATTERNS = patterns.DIGIT_PATTERNS;
 const Digit = @This();
 
 analogs: [24]Analog,
+digit_val: u8 = 0,
 
 const ROWS = 6;
 const COLS = 4;
@@ -31,6 +32,7 @@ pub fn init(start_x: f32, start_y: f32, radius: f32) Digit {
 
 pub fn setDigit(self: *Digit, digit: usize) void {
     const pattern = DIGIT_PATTERNS[digit];
+    self.digit_val = @as(u8, @intCast(digit));
 
     for (pattern, 0..) |char, i| {
         const char_type = PatternChar.fromUtf8(char);
@@ -48,5 +50,22 @@ pub fn update(self: *Digit, dt: f32) void {
 pub fn draw(self: Digit) void {
     for (self.analogs) |analog| {
         analog.draw();
+    }
+}
+
+pub fn getDigitValue(self: Digit) u8 {
+    return self.digit_val;
+}
+
+pub fn setSize(self: *Digit, radius: f32) void {
+    for (0..ROWS) |row| {
+        for (0..COLS) |col| {
+            const idx = row * COLS + col;
+            self.analogs[idx].radius = radius;
+            self.analogs[idx].pos = .{
+                .x = self.analogs[idx].pos.x, // Keep x position
+                .y = self.analogs[idx].pos.y, // Keep y position
+            };
+        }
     }
 }

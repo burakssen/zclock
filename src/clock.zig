@@ -73,7 +73,7 @@ pub fn draw(self: *const Clock) void {
     const size = rl.MeasureText(c_str.ptr, font_size);
 
     const x: f32 = (self.layout.colon_draw_x1 + self.layout.colon_draw_x2) / 2.0 - @as(f32, @floatFromInt(size)) / 2.0;
-    const y: f32 = (self.layout.colon_y - self.layout.digit_height / 2.0) - @as(f32, @floatFromInt(font_size));
+    const y: f32 = (self.layout.colon_y - self.layout.digit_height / 2.0) - 2 * @as(f32, @floatFromInt(font_size));
 
     // Draw below the clock
     rl.DrawText(
@@ -83,6 +83,15 @@ pub fn draw(self: *const Clock) void {
         font_size,
         rl.Color{ .r = 247, .g = 164, .b = 30, .a = 255 },
     );
+}
+
+pub fn handleResize(self: *Clock, new_layout: Layout) void {
+    self.layout = new_layout;
+
+    // Update digit sizes and positions
+    for (&self.digits) |*d| {
+        d.setSize(new_layout.radius);
+    }
 }
 
 fn drawDigitAt(digit: *const Digit, x: f32, y: f32) void {
